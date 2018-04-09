@@ -1,0 +1,42 @@
+{
+  "name": "dat-archive-web",
+  "version": "1.0.0",
+  "description": "DatArhive implementation for borwsers that uses dat-gateway",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RangerMauve/dat-archive-web.git"
+  },
+  "keywords": [
+    "dat",
+    "archive",
+    "web",
+    "beaker"
+  ],
+  "author": "rangermauve",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RangerMauve/dat-archive-web/issues"
+  },
+  "homepage": "https://github.com/RangerMauve/dat-archive-web#readme",
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.10.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "node-dat-archive": "^2.0.1"
+  },
+  "dependencies": {
+    "concat-stream": "^1.6.2",
+    "hyperdrive": "^9.12.3",
+    "parse-dat-url": "^3.0.1",
+    "pauls-dat-api": "^7.0.1",
+    "random-access-memory": "^2.4.0",
+    "websocket-stream": "^5.1.2"
+  }
+}
