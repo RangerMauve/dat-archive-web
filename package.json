@@ -4,7 +4,8 @@
   "description": "DatArhive implementation for borwsers that uses dat-gateway",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example": "node example.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +30,7 @@
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1",
+    "node": "^9.11.0",
     "node-dat-archive": "^2.0.1"
   },
   "dependencies": {
