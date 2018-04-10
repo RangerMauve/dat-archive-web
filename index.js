@@ -64,13 +64,38 @@ async function open (name, gateway, storage) {
 
   // Persist to indexDB cache in the future?
 
-  const socket = Websocket(`ws://${gateway}/${archive.key}`)
+  await waitReady(archive)
 
-  socket.pipe(archive.replicate()).pipe(socket)
+  const key = archive.key.toString('hex')
+
+  const proxyURL = `ws://${gateway}/${key}`
+
+  const socket = Websocket(proxyURL)
+
+  socket.pipe(archive.replicate({
+    live: true,
+    upload: true
+  })).pipe(socket)
+
+  await waitOpen(socket)
 
   return {
     archive,
     socket,
     version
   }
+}
+
+function waitReady (archive) {
+  return new Promise((resolve, reject) => {
+    archive.once('ready', resolve)
+    archive.once('error', reject)
+  })
+}
+
+function waitOpen (socket) {
+  return new Promise(function (resolve, reject) {
+    socket.once('data', resolve)
+    socket.once('error', reject)
+  })
 }
