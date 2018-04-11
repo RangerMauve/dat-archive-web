@@ -12,7 +12,7 @@ Public gateway: `gateway.mauve.moe:3000`
 ```javascript
 // After including the bundle in a script tag, or requiring it
 
-const archive = new DatArchive('dat://beakerbrowser.com')
+const archive = new DatArchive('dat://87ed2e3b160f261a032af03921a3bd09227d0a4cde73466c17114816cae43336')
 
 archive.readFile('/index.html')
   .then((html) => console.log(html))
