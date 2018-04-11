@@ -60,3 +60,6 @@ typings/
 # Package locks
 package-lock.json
 yarn.lock
+
+# Bundle
+bundle.js
