@@ -256,9 +256,12 @@ function massageFilepath (filepath) {
 }
 
 },{"beaker-error-constants":16,"concat-stream":39,"node-dat-archive/lib/const":102,"node-dat-archive/lib/util":103,"path":110,"pauls-dat-api":111}],2:[function(require,module,exports){
-const DatArchive = require("./")
+const DatArchive = require('./')
 
 window.DatArchive = DatArchive
+
+module.exports = DatArchive
+
 },{"./":3}],3:[function(require,module,exports){
 const parseDatURL = require('parse-dat-url')
 const ram = require('random-access-memory')
@@ -311,15 +314,15 @@ class DatArchiveWeb extends DatArchive {
 
 module.exports = DatArchiveWeb
 
-async function open (name, gateway, storage) {
+async function open (url, gateway, storage) {
   let archive = null
   let version = null
 
-  if (name) {
-    const url = await DatArchiveWeb.resolveName(name)
+  if (url) {
     const urlp = parseDatURL(url)
     version = urlp.version
-    archive = hyperdrive(ram, urlp.hostname)
+    const key = urlp.hostname || urlp.pathname.slice(2).slice(0, 64)
+    archive = hyperdrive(ram, key)
   } else {
     archive = hyperdrive(ram)
   }

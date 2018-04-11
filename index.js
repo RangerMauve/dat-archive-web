@@ -49,15 +49,15 @@ class DatArchiveWeb extends DatArchive {
 
 module.exports = DatArchiveWeb
 
-async function open (name, gateway, storage) {
+async function open (url, gateway, storage) {
   let archive = null
   let version = null
 
-  if (name) {
-    const url = await DatArchiveWeb.resolveName(name)
+  if (url) {
     const urlp = parseDatURL(url)
     version = urlp.version
-    archive = hyperdrive(ram, urlp.hostname)
+    const key = urlp.hostname || urlp.pathname.slice(2).slice(0, 64)
+    archive = hyperdrive(ram, key)
   } else {
     archive = hyperdrive(ram)
   }
