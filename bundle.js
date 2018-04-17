@@ -36,8 +36,6 @@ class DatArchive {
     let version = null
     let key = null
 
-    const storage = DatArchive._manager.getStorage()
-
     const options = {
       sparse: true
     }
@@ -51,6 +49,8 @@ class DatArchive {
       key = keypair.publicKey
       options.secretKey = keypair.secretKey
     }
+
+    const storage = DatArchive._manager.getStorage(key.toString('hex'))
 
     const archive = hyperdrive(storage, key, options)
 
