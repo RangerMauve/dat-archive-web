@@ -429,9 +429,12 @@ class PersistantManager extends DefaultManager {
   }
 }
 
-DatArchive.setManager(new PersistantManager())
-
-window.DatArchive = DatArchive
+// Only patch global if it doesn't exist
+// Makes this a polyfill!
+if (!window.DatArchive) {
+  DatArchive.setManager(new PersistantManager())
+  window.DatArchive = DatArchive
+}
 
 },{"./DatArchive":1,"./DefaultManager":2,"random-access-idb":167}],4:[function(require,module,exports){
 (function (Buffer,process){
