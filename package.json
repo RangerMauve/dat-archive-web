@@ -37,6 +37,8 @@
   },
   "dependencies": {
     "concat-stream": "^1.6.2",
+    "fetch-ponyfill": "^6.0.1",
+    "hypercore": "^6.13.0",
     "hyperdrive": "^9.12.3",
     "parse-dat-url": "^3.0.1",
     "pauls-dat-api": "^7.0.1",

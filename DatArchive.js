@@ -2,8 +2,10 @@
 
 const path = require('path')
 const pda = require('pauls-dat-api')
+const parseDatURL = require('parse-dat-url')
 const concat = require('concat-stream')
-const { datDns, timer, toEventTarget } = require('node-dat-archive/lib/util')
+const pump = require('pump')
+const { timer, toEventTarget } = require('node-dat-archive/lib/util')
 const {
   DAT_MANIFEST_FILENAME,
   DAT_VALID_PATH_REGEX,
@@ -14,6 +16,10 @@ const {
   ProtectedFileNotWritableError,
   InvalidPathError
 } = require('beaker-error-constants')
+const hyperdrive = require('hyperdrive')
+const crypto = require('hypercore/lib/crypto')
+
+const REPLICATION_DELAY = 3000
 
 const to = (opts) =>
   (opts && typeof opts.timeout !== 'undefined')
@@ -21,12 +27,65 @@ const to = (opts) =>
     : DEFAULT_DAT_API_TIMEOUT
 
 class DatArchive {
-  constructor (loadPromise) {
-    this._loadPromise = loadPromise
-    loadPromise.then((archive) => {
-      this._archive = archive
+  static setManager (manager) {
+    DatArchive._manager = manager
+  }
+
+  constructor (url) {
+    let version = null
+    let key = null
+
+    const storage = DatArchive._manager.getStorage()
+
+    const options = {
+      sparse: true
+    }
+
+    if (url) {
+      const urlp = parseDatURL(url)
+      version = urlp.version
+      key = urlp.hostname || urlp.pathname.slice(2).slice(0, 64)
+    } else {
+      const keypair = crypto.keyPair()
+      key = keypair.publicKey
+      options.secretKey = keypair.secretKey
+    }
+
+    const archive = hyperdrive(storage, key, options)
+
+    this._archive = archive
+
+    this._loadPromise = waitReady(archive).then(async () => {
+      this._checkout = version ? archive.checkout(version) : archive
       this.url = this.url || `dat://${archive.key.toString('hex')}`
+
+      const stream = this._replicate()
+
+      await waitOpen(stream)
+
+      if (url) {
+        await waitReplication()
+      }
     })
+  }
+
+  _replicate () {
+    const archive = this._archive
+    const key = archive.key.toString('hex')
+    const stream = DatArchive._manager.replicate(key)
+
+    pump(stream, archive.replicate({
+      live: true,
+      upload: true
+    }), stream, (err) => {
+      console.error(err)
+
+      this._replicate()
+    })
+
+    this._stream = stream
+
+    return stream
   }
 
   async getInfo (url, opts = {}) {
@@ -207,7 +266,31 @@ class DatArchive {
   }
 
   static async resolveName (name) {
-    return datDns.resolveName(name)
+    return DatArchive._manager.resolveName(name)
+  }
+
+  static async fork () {
+    throw new TypeError('Not supported')
+  }
+
+  static async selectArchive (options) {
+    const url = await DatArchive._manager.selectArchive(options)
+
+    const archive = new DatArchive(url)
+
+    await archive._loadPromise
+
+    return archive
+  }
+
+  static async create ({ title, description, type, author }) {
+    const archive = new DatArchive(null)
+
+    await archive._loadPromise
+
+    await pda.writeManifest(archive._archive, { url: archive.url, title, description, type, author })
+
+    return archive
   }
 }
 
@@ -252,4 +335,34 @@ function massageFilepath (filepath) {
     filepath = '/' + filepath
   }
   return filepath
+}
+
+function waitReady (archive) {
+  return new Promise((resolve, reject) => {
+    archive.once('ready', resolve)
+    archive.once('error', reject)
+  })
+}
+
+function waitOpen (stream) {
+  return new Promise(function (resolve, reject) {
+    stream.once('data', onData)
+    stream.once('error', onError)
+
+    function onData () {
+      stream.removeListener('error', onError)
+      resolve(stream)
+    }
+
+    function onError (e) {
+      stream.removeListener('data', onData)
+      reject(e)
+    }
+  })
+}
+
+function waitReplication () {
+  return new Promise((resolve) => {
+    setTimeout(resolve, REPLICATION_DELAY)
+  })
 }
