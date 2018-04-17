@@ -5,12 +5,28 @@
 		text-align: center;
 		max-width: 512px;
 		margin: 1em auto;
+		font-size: 1.5em;
+	}
+	code {
+		text-align: left;
+		display:block;
+		white-space: pre;
 	}
 </style>
 <p>
-	Open up your dev tools and play around with the DatArchive API
+	Open up your dev tools and play around with the DatArchive API.
 </p>
+<p>
+	Data will be persisted to IndexedDB
+</p>
+<p>Example:</p>
+<code>
+const dateHomepage =
+  `dat://87ed2e3b160f261a032af03921a3bd09227d0a4cde73466c17114816cae43336`
+
+const archive = new DatArchive(dateHomepage)
+
+archive.readFile('/index.html')
+  .then((html) => document.body.innerHTML = html)
+</code>
 <script src="./bundle.js"></script>
-<script>
-	DatArchive.setGateway("gateway.mauve.moe:3000")
-</script>

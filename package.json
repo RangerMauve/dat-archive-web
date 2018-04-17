@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "example": "node example.js",
-    "build": "browserify -r fs:graceful-fs -s DatArchiveWeb -e ./browser.js > bundle.js"
+    "build": "browserify -r fs:graceful-fs -s DatArchiveWeb -e ./browser.js > bundle.js",
+    "demo": "browserify -r fs:graceful-fs -s DatArchiveWeb -e ./demo.js > bundle.js"
   },
   "repository": {
     "type": "git",
@@ -33,9 +34,10 @@
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1",
     "node": "^9.11.0",
-    "node-dat-archive": "^2.0.1"
+    "random-access-idb": "^1.0.4"
   },
   "dependencies": {
+    "node-dat-archive": "^2.0.1",
     "concat-stream": "^1.6.2",
     "fetch-ponyfill": "^6.0.1",
     "hypercore": "^6.13.0",
