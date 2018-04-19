@@ -4,7 +4,7 @@ const idb = require('random-access-idb')
 
 class PersistantManager extends DefaultManager {
   constructor () {
-    super('gateway.mauve.moe:3000')
+    super('http://gateway.mauve.moe:3000')
   }
 
   getStorage (key) {
