@@ -1,11 +1,15 @@
 # dat-archive-web
 DatArchive implementation for browsers that uses dat-gateway
 
-Uses [fork of dat-gateway](https://github.com/RangerMauve/dat-gateway/tree/websocket-replication) that supports synchronization over websockets.
+Uses [a fork of dat-gateway](https://github.com/RangerMauve/dat-gateway) that supports synchronization over websockets.
 
 Based on [node-dat-archive](https://github.com/beakerbrowser/node-dat-archive)
 
 Public gateway: `gateway.mauve.moe:3000`
+
+```
+npm install --save dat-archive-web
+```
 
 ## Example
 
@@ -49,11 +53,12 @@ DatArchive.setManager(new DefaultManager(publicGateway))
 - [x] Initial implementation
 - [x] Public gateway
 - [x] Refactor to support more environments
-- [ ] Detect HTTP/HTTPS in gateway URL
-- [ ] Functional DatDNS support
-- [ ] Persist to IndexedDB
-- [ ] Forking
-- [ ] UI for choosing archives
+- [x] Detect HTTP/HTTPS in gateway URL
+- [x] Functional DatDNS support (via gateway)
+- [x] Persist to IndexedDB (via random-access-idb)
+- [ ] Full support for versions (currently kinda broken)
+- [ ] Forking (without preserving change feed)
+- [ ] UI for choosing archives (via external app)
 
 ## Development
 
