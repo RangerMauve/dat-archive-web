@@ -2,7 +2,7 @@
 
 const path = require('path')
 const pda = require('pauls-dat-api')
-const parseDatURL = require('parse-dat-url')
+const parseURL = require('url-parse')
 const concat = require('concat-stream')
 const pump = require('pump')
 const { timer, toEventTarget } = require('node-dat-archive/lib/util')
@@ -35,27 +35,28 @@ class DatArchive {
     let version = null
     let key = null
 
-    const options = {
-      sparse: true
-    }
+    this._loadPromise = getURLData(url).then(async (urlData) => {
+      const options = {
+        sparse: true
+      }
 
-    if (url) {
-      const urlp = parseDatURL(url)
-      version = urlp.version
-      key = urlp.hostname || urlp.pathname.slice(2).slice(0, 64)
-    } else {
-      const keypair = crypto.keyPair()
-      key = keypair.publicKey
-      options.secretKey = keypair.secretKey
-    }
+      if (urlData.key) {
+        key = urlData.key
+        version = urlData.version
+      } else {
+        const keypair = crypto.keyPair()
+        key = keypair.publicKey
+        options.secretKey = keypair.secretKey
+      }
 
-    const storage = DatArchive._manager.getStorage(key.toString('hex'))
+      const storage = DatArchive._manager.getStorage(key.toString('hex'))
 
-    const archive = hyperdrive(storage, key, options)
+      const archive = hyperdrive(storage, key, options)
 
-    this._archive = archive
+      this._archive = archive
 
-    this._loadPromise = waitReady(archive).then(async () => {
+      await waitReady(archive)
+
       this._checkout = version ? archive.checkout(version) : archive
       this.url = this.url || `dat://${archive.key.toString('hex')}`
 
@@ -269,8 +270,19 @@ class DatArchive {
     return DatArchive._manager.resolveName(name)
   }
 
-  static async fork () {
-    throw new TypeError('Not supported')
+  static async fork (url, opts) {
+    const srcDat = new DatArchive(url)
+
+    const destDat = await DatArchive.create(opts)
+
+    await srcDat._loadPromise
+
+    await pda.exportArchiveToArchive({
+      srcArchive: srcDat._archive,
+      dstArchive: destDat._archive
+    })
+
+    return destDat
   }
 
   static async selectArchive (options) {
@@ -283,7 +295,7 @@ class DatArchive {
     return archive
   }
 
-  static async create ({ title, description, type, author }) {
+  static async create ({ title, description, type, author } = {}) {
     const archive = new DatArchive(null)
 
     await archive._loadPromise
@@ -365,4 +377,21 @@ function waitReplication () {
   return new Promise((resolve) => {
     setTimeout(resolve, REPLICATION_DELAY)
   })
+}
+
+async function getURLData (url) {
+  let key = null
+  let version = null
+
+  if (url) {
+    const parsed = parseURL(url)
+    const hostnameParts = parsed.hostname.split('+')
+    key = await DatArchive._manager.resolveName(`dat://${hostnameParts[0]}`)
+    version = hostnameParts[1] || null
+  }
+
+  return {
+    key: key,
+    version: version
+  }
 }

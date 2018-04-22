@@ -26,8 +26,8 @@ archive.readFile('/index.html')
 
 Implements the same interface as [DatArchive](https://beakerbrowser.com/docs/apis/dat.html) in Beaker with the following exceptions:
 
-- `DatArchive.fork()`, `archive.diff()`, `archive.commit()`, and `archive.revert()` are not supported
-- `DatArchive.selectArchive()` returns a new DatArchive every time
+- `archive.diff()`, `archive.commit()`, and `archive.revert()` are not supported
+- `DatArchive.selectArchive()` returns a new DatArchive every time (You can implement better behavior in the Manager)
 - By default requires an instance of dat-gateway running on http://localhost:3000
 - Uses `DatArchive.setManager()` to set the manager which is an object with the following API:
   - `getStorage(key: String) : Promise<Storage>` : Retruns the [storage](https://www.npmjs.com/package/random-access-storage) to use with [hyperdrive](https://github.com/mafintosh/hyperdrive#var-archive--hyperdrivestorage-key-options). By default it will persist to [memory](https://www.npmjs.com/package/random-access-memory)
@@ -35,30 +35,31 @@ Implements the same interface as [DatArchive](https://beakerbrowser.com/docs/api
   - `replicate(key: String) : Stream` : Returns a stream used to replicate the hyperdrive instance. By default it will connect to the gateway over websockets.
   - `resolveName(url: String) : Promise<String>` resolves a dat URL with a hostname to a dat URL which uses the public key
   - An implementation can be found in `DefaultManager` that can be extended to do fancier things.
-
+  - Can also be used by extending from `DatArchive.DefaultManager`
 
 ## Setting a custom gateway
 
 ```javascript
 const DatArchive = require('dat-archive-web')
-const DefaultManager = require(`dat-archive-web/DefaultManager`)
+const DefaultManager = DatArchive.DefaultManager
 
 // Use a public dat gateway so you don't need a local one
 const publicGateway = 'gateway.mauve.moe:3000'
 DatArchive.setManager(new DefaultManager(publicGateway))
 ```
 
-# Roadmap
+# Features
 
-- [x] Initial implementation
-- [x] Public gateway
-- [x] Refactor to support more environments
+- [x] Support most DatArchvie methods
+- [x] Public [gateway](https://github.com/RangerMauve/dat-gateway) at http://gateway.mauve.moe:3000/ 
+- [x] Extensiblity for different environments
 - [x] Detect HTTP/HTTPS in gateway URL
 - [x] Functional DatDNS support (via gateway)
-- [x] Persist to IndexedDB (via random-access-idb)
-- [ ] Full support for versions (currently kinda broken)
-- [ ] Forking (without preserving change feed)
-- [ ] UI for choosing archives (via external app)
+- [x] Data stored in memory by default
+- [x] Can persist to IndexedDB (via random-access-idb)
+- [x] Full support for versions (Needs testing, but code is there)
+- [x] Forking (without preserving change feed)
+- [x] DatArchive.selectArchive() (function offloaded to Manager)
 
 ## Development
 
