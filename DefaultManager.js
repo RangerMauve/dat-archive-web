@@ -1,13 +1,13 @@
 const ram = require('random-access-memory')
 const Websocket = require('websocket-stream')
 const fetch = require('fetch-ponyfill')().fetch
-const parseDatURL = require('parse-dat-url')
+const parseURL = require('url-parse')
 
 const DEFAULT_PORT = 0xDA7
 
 class DefaultManager {
   constructor (gateway) {
-    const parsed = parseDatURL(gateway)
+    const parsed = parseURL(gateway)
     this.port = parsed.port || DEFAULT_PORT
     this.secure = parsed.protocol === 'https:'
     this.hostname = parsed.hostname
@@ -28,7 +28,7 @@ class DefaultManager {
   // Get a replication stream for a Dat key
   replicate (key) {
     const protocol = this.secure ? 'wss:' : 'ws:'
-    const proxyURL = `{${protocol}//${this.hostname}:${this.port}/${key}`
+    const proxyURL = `${protocol}//${this.hostname}:${this.port}/${key}`
 
     const socket = Websocket(proxyURL)
 
@@ -37,15 +37,22 @@ class DefaultManager {
 
   // Resolve a dat URL with a domain name to a dat URL with the key
   async resolveName (url) {
-    const key = parseDatURL(url.replace('dat', 'http')).hostname
+    const domain = parseURL(url).hostname
+
+    if (domain.length === 64) {
+      return domain
+    }
+
     const protocol = this.secure ? 'https:' : 'http:'
-    const proxyURL = `${protocol}//${this.hostname}:${this.port}/${key}/.well-known/dat`
+    const proxyURL = `${protocol}//${this.hostname}:${this.port}/${domain}/.well-known/dat`
 
     const response = await fetch(proxyURL)
 
     const resolved = await response.text()
 
-    return resolved.split('\n')[0].slice(6)
+    const key = resolved.split('\n')[0].slice(6)
+
+    return key
   }
 }
 
