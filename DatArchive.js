@@ -270,8 +270,19 @@ class DatArchive {
     return DatArchive._manager.resolveName(name)
   }
 
-  static async fork () {
-    throw new TypeError('Not supported')
+  static async fork (url, opts) {
+    const srcDat = new DatArchive(url)
+
+    const destDat = await DatArchive.create(opts)
+
+    await srcDat._loadPromise
+
+    await pda.exportArchiveToArchive({
+      srcArchive: srcDat._archive,
+      dstArchive: destDat._archive
+    })
+
+    return destDat
   }
 
   static async selectArchive (options) {
@@ -284,7 +295,7 @@ class DatArchive {
     return archive
   }
 
-  static async create ({ title, description, type, author }) {
+  static async create ({ title, description, type, author } = {}) {
     const archive = new DatArchive(null)
 
     await archive._loadPromise
