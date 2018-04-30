@@ -303,8 +303,8 @@ class DatArchive {
     await pda.writeManifest(archive._archive, { url: archive.url, title, description, type, author })
 
     await DatArchive._manager.onAddArchive(
-      archive.key.toString('hex'),
-      archive.metadata.secretKey.toString('hex'),
+      archive._archive.key.toString('hex'),
+      archive._archive.metadata.secretKey.toString('hex'),
       {title, description, type, author}
     )
 
