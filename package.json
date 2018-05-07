@@ -43,6 +43,7 @@
     "hyperdrive": "^9.12.3",
     "node-dat-archive": "^2.0.1",
     "pauls-dat-api": "^7.0.1",
+    "random-access-idb": "^1.0.4",
     "random-access-memory": "^2.4.0",
     "url-parse": "^1.4.0",
     "websocket-stream": "^5.1.2"
