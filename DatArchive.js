@@ -18,8 +18,11 @@ const {
 } = require('beaker-error-constants')
 const hyperdrive = require('hyperdrive')
 const crypto = require('hypercore/lib/crypto')
+const hexTo32 = require('hex-to-32')
 
 const REPLICATION_DELAY = 3000
+
+const BASE_32_KEY_LENGTH = 52
 
 const to = (opts) =>
   (opts && typeof opts.timeout !== 'undefined')
@@ -385,9 +388,21 @@ async function getURLData (url) {
 
   if (url) {
     const parsed = parseURL(url)
-    const hostnameParts = parsed.hostname.split('+')
-    key = await DatArchive._manager.resolveName(`dat://${hostnameParts[0]}`)
-    version = hostnameParts[1] || null
+    let hostname = null
+    if (parsed.protocol.indexOf('dat') !== -1) {
+      const hostnameParts = parsed.hostname.split('+')
+      hostname = hostnameParts[0]
+      version = hostnameParts[1] || null
+    } else {
+      const hostnameParts = parsed.hostname.split('.')
+      const subdomain = hostnameParts[0]
+      if (subdomain.length === BASE_32_KEY_LENGTH) {
+        hostname = hexTo32.decode(subdomain)
+      } else {
+        hostname = parsed.hostname
+      }
+    }
+    key = await DatArchive._manager.resolveName(`dat://${hostname}`)
   }
 
   return {
