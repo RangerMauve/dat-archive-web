@@ -1,6 +1,6 @@
 {
   "name": "dat-archive-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "DatArhive implementation for borwsers that uses dat-gateway",
   "main": "index.js",
   "scripts": {
@@ -37,6 +37,7 @@
   "dependencies": {
     "concat-stream": "^1.6.2",
     "fetch-ponyfill": "^6.0.1",
+    "hex-to-32": "^1.0.0",
     "hypercore": "^6.13.0",
     "hyperdrive": "^9.12.3",
     "node-dat-archive": "^2.0.1",
