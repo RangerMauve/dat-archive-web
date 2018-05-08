@@ -19,6 +19,12 @@ class DefaultManager {
     return ram
   }
 
+  // Invoked when a new archive has been created
+  async onAddArchive (key, secretKey, options) {
+    // Managers should save the key to support `selectArchive`
+    return null
+  }
+
   // Get the URL of an archive to use
   async selectArchive (options) {
     // Return null to create a new instance since nothing is persisted
