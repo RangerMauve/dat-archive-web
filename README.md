@@ -34,6 +34,7 @@ Implements the same interface as [DatArchive](https://beakerbrowser.com/docs/api
   - `selectArchive(options) : Promise<String>` : Returns the URL of a user selected archive. Takes same options as the [DatArchive API](https://beakerbrowser.com/docs/apis/dat.html#datarchive-selectarchive). By default it returns null to always create a new archive
   - `replicate(key: String) : Stream` : Returns a stream used to replicate the hyperdrive instance. By default it will connect to the gateway over websockets.
   - `resolveName(url: String) : Promise<String>` resolves a dat URL with a hostname to a dat URL which uses the public key
+  - `onAddArchive(key: String, secretKey: String, options: Object) : Promise<void>` invoked whenever `DatArchive.create()` is invoked. Allows managers to save the dat information to be used in `selectArchive()`
   - An implementation can be found in `DefaultManager` that can be extended to do fancier things.
   - Can also be used by extending from `DatArchive.DefaultManager`
 
