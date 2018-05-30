@@ -306,6 +306,12 @@ class DatArchive {
 
     await pda.writeManifest(archive._archive, { url: archive.url, title, description, type, author })
 
+    await DatArchive._manager.onAddArchive(
+      archive._archive.key.toString('hex'),
+      archive._archive.metadata.secretKey.toString('hex'),
+      {title, description, type, author}
+    )
+
     return archive
   }
 }
@@ -432,6 +438,12 @@ class DefaultManager {
   getStorage (key) {
     // Store in memory by default
     return ram
+  }
+
+  // Invoked when a new archive has been created
+  async onAddArchive (key, secretKey, options) {
+    // Managers should save the key to support `selectArchive`
+    return null
   }
 
   // Get the URL of an archive to use
