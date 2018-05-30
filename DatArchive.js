@@ -37,6 +37,7 @@ class DatArchive {
   constructor (url) {
     let version = null
     let key = null
+    let secretKey = null
 
     this._loadPromise = getURLData(url).then(async (urlData) => {
       const options = {
@@ -49,10 +50,11 @@ class DatArchive {
       } else {
         const keypair = crypto.keyPair()
         key = keypair.publicKey
-        options.secretKey = keypair.secretKey
+        secretKey = keypair.secretKey
+        options.secretKey = secretKey
       }
 
-      const storage = DatArchive._manager.getStorage(key.toString('hex'))
+      const storage = DatArchive._manager.getStorage(key.toString('hex'), secretKey.toString('hex'))
 
       const archive = hyperdrive(storage, key, options)
 

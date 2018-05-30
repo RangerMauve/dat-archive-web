@@ -14,7 +14,9 @@ class DefaultManager {
   }
 
   // Get a `random-access-storage` instance for a Dat key
-  getStorage (key) {
+  // `key` is the dat key for the storage
+  // `secretKey` is used if this is a newly created dat. This can be used with onAddArchive to track created dats.
+  getStorage (key, secretKey) {
     // Store in memory by default
     return ram
   }
