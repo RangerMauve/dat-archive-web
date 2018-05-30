@@ -54,7 +54,7 @@ class DatArchive {
         options.secretKey = secretKey
       }
 
-      const storage = DatArchive._manager.getStorage(key.toString('hex'), secretKey.toString('hex'))
+      const storage = DatArchive._manager.getStorage(key.toString('hex'), secretKey && secretKey.toString('hex'))
 
       const archive = hyperdrive(storage, key, options)
 
@@ -397,7 +397,9 @@ async function getURLData (url) {
   if (url) {
     const parsed = parseURL(url)
     let hostname = null
-    if (parsed.protocol.indexOf('dat') !== -1) {
+    const isDat = parsed.protocol.indexOf('dat') === 0
+    const isUndefined = parsed.protocol.indexOf('undefined') === 0
+    if (isDat || isUndefined) {
       const hostnameParts = parsed.hostname.split('+')
       hostname = hostnameParts[0]
       version = hostnameParts[1] || null
