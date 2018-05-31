@@ -8,8 +8,7 @@ const pump = require('pump')
 const { timer, toEventTarget } = require('node-dat-archive/lib/util')
 const {
   DAT_MANIFEST_FILENAME,
-  DAT_VALID_PATH_REGEX,
-  DEFAULT_DAT_API_TIMEOUT
+  DAT_VALID_PATH_REGEX
 } = require('node-dat-archive/lib/const')
 const {
   ArchiveNotWritableError,
@@ -22,12 +21,15 @@ const hexTo32 = require('hex-to-32')
 
 const REPLICATION_DELAY = 3000
 
+// Gateways are hella slow so we'll have a crazy long timeout
+const API_TIMEOUT = 15 * 1000
+
 const BASE_32_KEY_LENGTH = 52
 
 const to = (opts) =>
   (opts && typeof opts.timeout !== 'undefined')
     ? opts.timeout
-    : DEFAULT_DAT_API_TIMEOUT
+    : API_TIMEOUT
 
 class DatArchive {
   static setManager (manager) {
@@ -38,6 +40,8 @@ class DatArchive {
     let version = null
     let key = null
     let secretKey = null
+
+    this.url = url
 
     this._loadPromise = getURLData(url).then(async (urlData) => {
       const options = {
@@ -264,7 +268,7 @@ class DatArchive {
   }
 
   createFileActivityStream (pathPattern) {
-    return toEventTarget(pda.createFileActivityStream(this._archive, pathPattern))
+    return toEventTarget(pda.watch(this._archive, pathPattern))
   }
 
   createNetworkActivityStream () {
