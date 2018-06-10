@@ -11,6 +11,8 @@ Public gateway: `gateway.mauve.moe:3000`
 npm install --save dat-archive-web
 ```
 
+Check out [dat-polyfill](https://github.com/RangerMauve/dat-polyfill) if you want to set up the DatArchive API automaically.
+
 ## Example
 
 ```javascript
@@ -35,6 +37,7 @@ Implements the same interface as [DatArchive](https://beakerbrowser.com/docs/api
   - `replicate(key: String) : Stream` : Returns a stream used to replicate the hyperdrive instance. By default it will connect to the gateway over websockets.
   - `resolveName(url: String) : Promise<String>` resolves a dat URL with a hostname to a dat URL which uses the public key
   - `onAddArchive(key: String, secretKey: String, options: Object) : Promise<void>` invoked whenever `DatArchive.create()` is invoked. Allows managers to save the dat information to be used in `selectArchive()`
+  - `gateway` is a property used for getting/setting the gateway URL at runtime
   - An implementation can be found in `DefaultManager` that can be extended to do fancier things.
   - Can also be used by extending from `DatArchive.DefaultManager`
 

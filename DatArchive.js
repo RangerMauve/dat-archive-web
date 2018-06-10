@@ -37,46 +37,52 @@ class DatArchive {
   }
 
   constructor (url) {
+    this.url = url
+
+    this._loadPromise = this._initialize(url)
+  }
+
+  async _initialize (url) {
     let version = null
     let key = null
     let secretKey = null
 
-    this.url = url
+    await DatArchive._manager.loading
 
-    this._loadPromise = getURLData(url).then(async (urlData) => {
-      const options = {
-        sparse: true
-      }
+    const urlData = getURLData(url)
 
-      if (urlData.key) {
-        key = urlData.key
-        version = urlData.version
-      } else {
-        const keypair = crypto.keyPair()
-        key = keypair.publicKey
-        secretKey = keypair.secretKey
-        options.secretKey = secretKey
-      }
+    const options = {
+      sparse: true
+    }
 
-      const storage = DatArchive._manager.getStorage(key.toString('hex'), secretKey && secretKey.toString('hex'))
+    if (urlData.key) {
+      key = urlData.key
+      version = urlData.version
+    } else {
+      const keypair = crypto.keyPair()
+      key = keypair.publicKey
+      secretKey = keypair.secretKey
+      options.secretKey = secretKey
+    }
 
-      const archive = hyperdrive(storage, key, options)
+    const storage = DatArchive._manager.getStorage(key.toString('hex'), secretKey && secretKey.toString('hex'))
 
-      this._archive = archive
+    const archive = hyperdrive(storage, key, options)
 
-      await waitReady(archive)
+    this._archive = archive
 
-      this._checkout = version ? archive.checkout(version) : archive
-      this.url = this.url || `dat://${archive.key.toString('hex')}`
+    await waitReady(archive)
 
-      const stream = this._replicate()
+    this._checkout = version ? archive.checkout(version) : archive
+    this.url = this.url || `dat://${archive.key.toString('hex')}`
 
-      await waitOpen(stream)
+    const stream = this._replicate()
 
-      if (url) {
-        await waitReplication()
-      }
-    })
+    await waitOpen(stream)
+
+    if (url) {
+      await waitReplication()
+    }
   }
 
   _replicate () {

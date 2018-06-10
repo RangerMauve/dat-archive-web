@@ -1,16 +1,25 @@
 const ram = require('random-access-memory')
 const Websocket = require('websocket-stream')
 const fetch = require('fetch-ponyfill')().fetch
-const parseURL = require('url-parse')
-
-const DEFAULT_PORT = 0xDA7
 
 class DefaultManager {
+  // Set up the manager with an optional gateway
+  // If no gateway is specified in the constructor, make sure to invoke setGateway before the first archive is loaded
   constructor (gateway) {
-    const parsed = parseURL(gateway)
-    this.port = parsed.port || DEFAULT_PORT
-    this.secure = parsed.protocol === 'https:'
-    this.hostname = parsed.hostname
+    // Set .loading to a promise if you need initialization before the manager can be used
+    this.loading = null
+
+    if (gateway) {
+      this.setGateway(gateway)
+    }
+  }
+
+  set gateway (gateway) {
+    this._gateway = new window.URL(gateway)
+  }
+
+  get gateway () {
+    return this._gateway.toString()
   }
 
   // Get a `random-access-storage` instance for a Dat key
@@ -35,8 +44,12 @@ class DefaultManager {
 
   // Get a replication stream for a Dat key
   replicate (key) {
-    const protocol = this.secure ? 'wss:' : 'ws:'
-    const proxyURL = `${protocol}//${this.hostname}:${this.port}/${key}`
+    const proxyURLData = new window.URL(this.gateway)
+
+    proxyURLData.protocol = proxyURLData.protocol.replace('http', 'ws')
+    proxyURLData.pathname = key
+
+    const proxyURL = proxyURLData.toString()
 
     const socket = Websocket(proxyURL)
 
@@ -45,20 +58,21 @@ class DefaultManager {
 
   // Resolve a dat URL with a domain name to a dat URL with the key
   async resolveName (url) {
-    const domain = parseURL(url).hostname
+    let key = (new window.URL(url)).hostname
 
-    if (domain.length === 64) {
-      return domain
+    if (key.length === 64) {
+      return key
     }
 
-    const protocol = this.secure ? 'https:' : 'http:'
-    const proxyURL = `${protocol}//${this.hostname}:${this.port}/${domain}/.well-known/dat`
+    var proxyURL = new window.URL(this.gateway)
+    proxyURL.pathname = `${key}/.well-known/dat`
 
-    const response = await fetch(proxyURL)
+    const response = await fetch(proxyURL.toString())
 
     const resolved = await response.text()
 
-    const key = resolved.split('\n')[0].slice(6)
+    // The first line should be a `dat://` url, take the key from it
+    key = resolved.split('\n')[0].slice(6)
 
     return key
   }
