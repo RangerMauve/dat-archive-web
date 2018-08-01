@@ -73,8 +73,14 @@ class DatArchive {
 
       await waitOpen(stream)
 
-      if (url) {
-        await waitReplication()
+      if (!archive.writable && !archive.metadata.length) {
+        // wait to receive a first update
+        await new Promise((resolve, reject) => {
+          archive.metadata.update(err => {
+            if (err) reject(err)
+            else resolve()
+          })
+        })
       }
     })
   }
