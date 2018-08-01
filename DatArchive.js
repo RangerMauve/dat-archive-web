@@ -19,8 +19,6 @@ const hyperdrive = require('hyperdrive')
 const crypto = require('hypercore/lib/crypto')
 const hexTo32 = require('hex-to-32')
 
-const REPLICATION_DELAY = 3000
-
 // Gateways are hella slow so we'll have a crazy long timeout
 const API_TIMEOUT = 15 * 1000
 
@@ -73,8 +71,14 @@ class DatArchive {
 
       await waitOpen(stream)
 
-      if (url) {
-        await waitReplication()
+      if (!archive.writable && !archive.metadata.length) {
+        // wait to receive a first update
+        await new Promise((resolve, reject) => {
+          archive.metadata.update(err => {
+            if (err) reject(err)
+            else resolve()
+          })
+        })
       }
     })
   }
@@ -385,12 +389,6 @@ function waitOpen (stream) {
       stream.removeListener('data', onData)
       reject(e)
     }
-  })
-}
-
-function waitReplication () {
-  return new Promise((resolve) => {
-    setTimeout(resolve, REPLICATION_DELAY)
   })
 }
 
