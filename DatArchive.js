@@ -135,6 +135,14 @@ class DatArchive {
     })
   }
 
+  async configure(settings) {
+    await this._loadPromise
+    if (!settings || typeof settings !== 'object') throw new Error('Invalid argument')
+    if ('title' in settings || 'description' in settings || 'type' in settings || 'author' in settings) {
+      await pda.updateManifest(this._archive, settings)
+    }
+  }
+
   async diff () {
     // noop
     return []
@@ -268,6 +276,24 @@ class DatArchive {
       if (this._version) throw new ArchiveNotWritableError('Cannot modify a historic version')
       await assertUnprotectedFilePath(filepath)
       return pda.rmdir(this._archive, filepath, opts)
+    })
+  }
+
+  async copy (path, dstPath, opts) {
+    path = massageFilepath(path)
+    dstPath = massageFilepath(dstPath);
+    return timer(to(opts), async () => {
+      await this._loadPromise
+      await pda.copy(this._archive, path, dstPath)
+    })
+  }
+
+  async rename(filepath, dstpath, opts) {
+    filepath = massageFilepath(filepath)
+    dstpath = massageFilepath(dstpath);
+    return timer(to(opts), async () => {
+      await this._loadPromise
+      await pda.rename(this._archive, filepath, dstpath)
     })
   }
 
