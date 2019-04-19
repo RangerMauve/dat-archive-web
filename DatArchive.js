@@ -18,6 +18,7 @@ const {
 const hyperdrive = require('hyperdrive')
 const crypto = require('hypercore/lib/crypto')
 const hexTo32 = require('hex-to-32')
+const Dat = require('dat-js')
 
 // Gateways are hella slow so we'll have a crazy long timeout
 const API_TIMEOUT = 15 * 1000
@@ -30,8 +31,19 @@ const to = (opts) =>
     : API_TIMEOUT
 
 class DatArchive {
-  static setManager (manager) {
-    DatArchive._manager = manager
+  static getDat () {
+    if(this.dat) return this.dat
+    const dat = new Dat()
+
+    return dat
+  }
+
+  static isLocal () {
+
+  }
+
+  static deleteData(key) {
+    
   }
 
   constructor (url) {
@@ -135,7 +147,7 @@ class DatArchive {
     })
   }
 
-  async configure(settings) {
+  async configure (settings) {
     await this._loadPromise
     if (!settings || typeof settings !== 'object') throw new Error('Invalid argument')
     if ('title' in settings || 'description' in settings || 'type' in settings || 'author' in settings) {
@@ -281,16 +293,16 @@ class DatArchive {
 
   async copy (path, dstPath, opts) {
     path = massageFilepath(path)
-    dstPath = massageFilepath(dstPath);
+    dstPath = massageFilepath(dstPath)
     return timer(to(opts), async () => {
       await this._loadPromise
       await pda.copy(this._archive, path, dstPath)
     })
   }
 
-  async rename(filepath, dstpath, opts) {
+  async rename (filepath, dstpath, opts) {
     filepath = massageFilepath(filepath)
-    dstpath = massageFilepath(dstpath);
+    dstpath = massageFilepath(dstpath)
     return timer(to(opts), async () => {
       await this._loadPromise
       await pda.rename(this._archive, filepath, dstpath)
@@ -344,7 +356,7 @@ class DatArchive {
     await DatArchive._manager.onAddArchive(
       archive._archive.key.toString('hex'),
       archive._archive.metadata.secretKey.toString('hex'),
-      {title, description, type, author}
+      { title, description, type, author }
     )
 
     return archive
