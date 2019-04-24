@@ -1,5 +1,5 @@
 const DatArchive = require('./')
 
-window.DatArchive = DatArchive
+if(!Window.DatArchive) window.DatArchive = DatArchive
 
 module.exports = DatArchive
