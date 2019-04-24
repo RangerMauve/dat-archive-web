@@ -4,7 +4,6 @@ const path = require('path')
 const pda = require('pauls-dat-api')
 const parseURL = require('url-parse')
 const concat = require('concat-stream')
-const pump = require('pump')
 const { timer, toEventTarget } = require('node-dat-archive/lib/util')
 const {
   DAT_MANIFEST_FILENAME,
@@ -15,8 +14,6 @@ const {
   ProtectedFileNotWritableError,
   InvalidPathError
 } = require('beaker-error-constants')
-const hyperdrive = require('hyperdrive')
-const crypto = require('hypercore/lib/crypto')
 const hexTo32 = require('hex-to-32')
 const Dat = require('dat-js')
 
@@ -31,90 +28,84 @@ const to = (opts) =>
     : API_TIMEOUT
 
 class DatArchive {
-  static getDat () {
-    if(this.dat) return this.dat
+  static _getDat () {
+    if (this.dat) return this.dat
     const dat = new Dat()
+    this.dat = dat
 
     return dat
   }
 
-  static isLocal () {
-
+  static _isLocal (key) {
+    try {
+      const current = DatArchive._listLocal()
+      return current.includes(key)
+    } catch (e) {
+      return false
+    }
   }
 
-  static deleteData(key) {
-    
+  static _addLocal (key) {
+    try {
+      const current = DatArchive._listLocal()
+      DatArchive._saveLocal(current.concat(key))
+    } catch (e) {
+      DatArchive._saveLocal([key])
+    }
+  }
+
+  static _listLocal () {
+    try {
+      return JSON.parse(localStorage.getItem('dats'))
+    } catch (e) {
+      return []
+    }
+  }
+
+  static _saveLocal (list) {
+    localStorage.setItem('dats', JSON.stringify(list))
   }
 
   constructor (url) {
-    let version = null
-    let key = null
-    let secretKey = null
-
     this.url = url
 
-    this._loadPromise = getURLData(url).then(async (urlData) => {
-      const options = {
-        sparse: true
+    let { key, version } = getURLData(url)
+
+    let archive = null
+
+    const dat = DatArchive._getDat()
+    if (key) {
+      const options = {}
+      if (DatArchive._isLocal(key)) {
+        options.persist = true
       }
+      archive = dat.get(key, options)
+    } else {
+      archive = dat.create({
+        persist: true
+      })
+      DatArchive._addLocal(archive.metadata.key.toString('hex'))
+    }
 
-      if (urlData.key) {
-        key = urlData.key
-        version = urlData.version
-      } else {
-        const keypair = crypto.keyPair()
-        key = keypair.publicKey
-        secretKey = keypair.secretKey
-        options.secretKey = secretKey
-      }
+    this._archive = archive
 
-      const storage = DatArchive._manager.getStorage(key.toString('hex'), secretKey && secretKey.toString('hex'))
-
-      const archive = hyperdrive(storage, key, options)
-
-      this._archive = archive
-
-      await waitReady(archive)
-
+    this._loadPromise = waitReady(archive).then(async () => {
       this._checkout = version ? archive.checkout(version) : archive
       this.url = this.url || `dat://${archive.key.toString('hex')}`
 
-      const stream = this._replicate()
-
-      await waitOpen(stream)
-
-      if (!archive.writable && !archive.metadata.length) {
-        // wait to receive a first update
-        await new Promise((resolve, reject) => {
-          archive.metadata.update(err => {
-            if (err) reject(err)
-            else resolve()
-          })
-        })
-      }
+      // if (!archive.writable && !archive.metadata.length) {
+      //   // wait to receive a first update
+      //   await new Promise((resolve, reject) => {
+      //     archive.metadata.update(err => {
+      //       if (err) reject(err)
+      //       else resolve()
+      //     })
+      //   })
+      // }
     })
   }
 
-  _replicate () {
-    const archive = this._archive
-    const key = archive.key.toString('hex')
-    const stream = DatArchive._manager.replicate(key)
-
-    pump(stream, archive.replicate({
-      live: true,
-      upload: true
-    }), stream, (err) => {
-      console.error(err)
-
-      this._replicate()
-    })
-
-    this._stream = stream
-
-    return stream
-  }
-
-  async getInfo (url, opts = {}) {
+  async getInfo (opts = {}) {
     return timer(to(opts), async () => {
       await this._loadPromise
 
@@ -318,7 +309,7 @@ class DatArchive {
   }
 
   static async resolveName (name) {
-    return DatArchive._manager.resolveName(name)
+    throw new Error('Not Supported')
   }
 
   static async fork (url, opts) {
@@ -337,11 +328,21 @@ class DatArchive {
   }
 
   static async selectArchive (options) {
-    const url = await DatArchive._manager.selectArchive(options)
+    const urls = DatArchive._listLocal()
+    const archives = urls.map((url) => new DatArchive(url))
 
-    const archive = new DatArchive(url)
+    const info = await Promise.all(archives.map((archive) => archive.getInfo()))
 
-    await archive._loadPromise
+    const message = `
+    Please choose a Dat Archive:
+    ${info.map(({ url, title }, index) => `${index}. ${title || 'Untitled'}: ${url}`).join('\n')}
+    `
+
+    const selection = prompt(message, 0)
+
+    const archive = archives[selection]
+
+    if (!archive) throw new Error('Archive Not Found', selection)
 
     return archive
   }
@@ -352,12 +353,6 @@ class DatArchive {
     await archive._loadPromise
 
     await pda.writeManifest(archive._archive, { url: archive.url, title, description, type, author })
-
-    await DatArchive._manager.onAddArchive(
-      archive._archive.key.toString('hex'),
-      archive._archive.metadata.secretKey.toString('hex'),
-      { title, description, type, author }
-    )
 
     return archive
   }
@@ -408,33 +403,19 @@ function massageFilepath (filepath) {
 
 function waitReady (archive) {
   return new Promise((resolve, reject) => {
-    archive.once('ready', resolve)
-    archive.once('error', reject)
+    archive.ready((err) => {
+      if(err) reject(err)
+      else resolve(archive)
+    })
   })
 }
 
-function waitOpen (stream) {
-  return new Promise(function (resolve, reject) {
-    stream.once('data', onData)
-    stream.once('error', onError)
-
-    function onData () {
-      stream.removeListener('error', onError)
-      resolve(stream)
-    }
-
-    function onError (e) {
-      stream.removeListener('data', onData)
-      reject(e)
-    }
-  })
-}
-
-async function getURLData (url) {
+function getURLData (url) {
   let key = null
   let version = null
 
   if (url) {
+    if (!url.startsWith('dat://') && !url.startsWith('http://') && !url.startsWith('https://')) url = `dat://${url}`
     const parsed = parseURL(url)
     let hostname = null
     const isDat = parsed.protocol.indexOf('dat') === 0
@@ -452,11 +433,11 @@ async function getURLData (url) {
         hostname = parsed.hostname
       }
     }
-    key = await DatArchive._manager.resolveName(`dat://${hostname}`)
+    key = hostname
   }
 
   return {
-    key: key,
-    version: version
+    key,
+    version
   }
 }

@@ -1,14 +1,14 @@
 # dat-archive-web
-DatArchive implementation for browsers that uses dat-gateway
-
-Uses [a fork of dat-gateway](https://github.com/RangerMauve/dat-gateway) that supports synchronization over websockets.
-
-Based on [node-dat-archive](https://github.com/beakerbrowser/node-dat-archive)
-
-Public gateway: `gateway.mauve.moe:3000`
+DatArchive implementation for browsers using [dat-js](https://github.com/datproject/dat-js#readme)
 
 ```
 npm install --save dat-archive-web
+```
+
+Or
+
+```html
+<script src="//unpkg.com/dat-archive-web/bundle.js"></script>
 ```
 
 ## Example
@@ -27,40 +27,19 @@ archive.readFile('/index.html')
 Implements the same interface as [DatArchive](https://beakerbrowser.com/docs/apis/dat.html) in Beaker with the following exceptions:
 
 - `archive.diff()`, `archive.commit()`, and `archive.revert()` are not supported
-- `DatArchive.selectArchive()` returns a new DatArchive every time (You can implement better behavior in the Manager)
-- By default requires an instance of dat-gateway running on http://localhost:3000
-- Uses `DatArchive.setManager()` to set the manager which is an object with the following API:
-  - `getStorage(key: String) : Promise<Storage>` : Retruns the [storage](https://www.npmjs.com/package/random-access-storage) to use with [hyperdrive](https://github.com/mafintosh/hyperdrive#var-archive--hyperdrivestorage-key-options). By default it will persist to [memory](https://www.npmjs.com/package/random-access-memory)
-  - `selectArchive(options) : Promise<String>` : Returns the URL of a user selected archive. Takes same options as the [DatArchive API](https://beakerbrowser.com/docs/apis/dat.html#datarchive-selectarchive). By default it returns null to always create a new archive
-  - `replicate(key: String) : Stream` : Returns a stream used to replicate the hyperdrive instance. By default it will connect to the gateway over websockets.
-  - `resolveName(url: String) : Promise<String>` resolves a dat URL with a hostname to a dat URL which uses the public key
-  - `onAddArchive(key: String, secretKey: String, options: Object) : Promise<void>` invoked whenever `DatArchive.create()` is invoked. Allows managers to save the dat information to be used in `selectArchive()`
-  - An implementation can be found in `DefaultManager` that can be extended to do fancier things.
-  - Can also be used by extending from `DatArchive.DefaultManager`
-
-## Setting a custom gateway
-
-```javascript
-const DatArchive = require('dat-archive-web')
-const DefaultManager = DatArchive.DefaultManager
-
-// Use a public dat gateway so you don't need a local one
-const publicGateway = 'gateway.mauve.moe:3000'
-DatArchive.setManager(new DefaultManager(publicGateway))
-```
+- `DatArchive.selectArchive()` doesn't do filtering and looks crappy. Uses [window.prompt](https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt) API
+- `DatArchive.resolveName()` doesn't work and DNS based urls aren't supported. Waiting for dat-js support
 
 # Features
 
-- [x] Support most DatArchvie methods
-- [x] Public [gateway](https://github.com/RangerMauve/dat-gateway) at http://gateway.mauve.moe:3000/ 
-- [x] Extensiblity for different environments
+- [x] Support most DatArchive methods
+- [x] Public bridges used to replicate with non-browser network
 - [x] Detect HTTP/HTTPS in gateway URL
-- [x] Functional DatDNS support (via gateway)
-- [x] Data stored in memory by default
-- [x] Can persist to IndexedDB (via random-access-idb)
+- [x] Data stored in memory by default, unless it was created locally.
+- [] Functional DatDNS support (via gateway)
 - [x] Full support for versions (Needs testing, but code is there)
 - [x] Forking (without preserving change feed)
-- [x] DatArchive.selectArchive() (function offloaded to Manager)
+- [x] DatArchive.selectArchive() Really rudimentary
 
 ## Development
 
