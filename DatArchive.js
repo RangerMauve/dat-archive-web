@@ -356,6 +356,14 @@ class DatArchive {
 
     return archive
   }
+
+  static async load(url) {
+    const archive = new DatArchive(url)
+
+    await archive._loadPromise
+
+    return archive
+  }
 }
 
 module.exports = DatArchive
