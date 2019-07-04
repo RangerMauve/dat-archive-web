@@ -45,6 +45,7 @@
     "beaker-error-constants": "^1.4.0",
     "concat-stream": "^1.6.2",
     "dat-js": "^8.0.0",
+    "dom-event-target": "^1.0.0",
     "hex-to-32": "^1.0.0",
     "node-dat-archive": "^2.0.1",
     "pauls-dat-api": "^7.0.1",
