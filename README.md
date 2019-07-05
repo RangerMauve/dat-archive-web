@@ -18,6 +18,13 @@ Or
 
 const archive = new DatArchive('dat://87ed2e3b160f261a032af03921a3bd09227d0a4cde73466c17114816cae43336')
 
+// Subscribe to network events
+archive.addEventListener("download", ({bytes}) => console.log(`Downloaded ${bytes} bytes`))
+
+// Subscribe to file events
+const emitter = archive.watch("/path/to/watch")
+emitter.addEventListener("change", ({path}) => console.log(`file at path: ${path} changed!`))
+
 archive.readFile('/index.html')
   .then((html) => console.log(html))
 ```

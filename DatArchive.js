@@ -4,6 +4,7 @@ const path = require('path')
 const pda = require('pauls-dat-api')
 const parseURL = require('url-parse')
 const concat = require('concat-stream')
+const EventTarget = require("dom-event-target");
 const { timer, toEventTarget } = require('node-dat-archive/lib/util')
 const {
   DAT_MANIFEST_FILENAME,
@@ -27,7 +28,7 @@ const to = (opts) =>
     ? opts.timeout
     : API_TIMEOUT
 
-class DatArchive {
+class DatArchive extends EventTarget {
   static _getDat () {
     if (this.dat) return this.dat
     const dat = new Dat()
@@ -67,6 +68,7 @@ class DatArchive {
   }
 
   constructor (url) {
+    super();
     this.url = url
 
     let { key, version } = getURLData(url)
@@ -103,6 +105,24 @@ class DatArchive {
       //   })
       // }
     })
+
+    var s = toEventTarget(pda.createNetworkActivityStream(this._archive));
+
+    s.addEventListener("network-changed", detail =>
+      this.send("network-changed", { target: this, ...detail })
+    );
+
+    s.addEventListener("download", detail =>
+      this.send("download", { target: this, ...detail })
+    );
+
+    s.addEventListener("upload", detail =>
+      this.send("upload", { target: this, ...detail })
+    );
+
+    s.addEventListener("sync", detail =>
+      this.send("sync", { target: this, ...detail })
+    );
   }
 
   async getInfo (opts = {}) {
@@ -206,6 +226,17 @@ class DatArchive {
       await this._loadPromise
       return pda.readFile(this._checkout, filepath, opts)
     })
+  }
+
+  watch(pathPattern, onInvalidated) {
+    if (typeof pathPattern === "function") {
+      onInvalidated = pathPattern;
+      pathPattern = null;
+    }
+
+    var evts = toEventTarget(pda.watch(this._archive, pathPattern));
+    if (onInvalidated) evts.addEventListener("invalidated", onInvalidated);
+    return evts;
   }
 
   async writeFile (filepath, data, opts = {}) {
