@@ -4,7 +4,7 @@ const path = require('path')
 const pda = require('pauls-dat-api')
 const parseURL = require('url-parse')
 const concat = require('concat-stream')
-const EventTarget = require("dom-event-target");
+const EventTarget = require('dom-event-target')
 const { timer, toEventTarget } = require('node-dat-archive/lib/util')
 const {
   DAT_MANIFEST_FILENAME,
@@ -68,7 +68,7 @@ class DatArchive extends EventTarget {
   }
 
   constructor (url) {
-    super();
+    super()
     this.url = url
 
     let { key, version } = getURLData(url)
@@ -106,23 +106,23 @@ class DatArchive extends EventTarget {
       // }
     })
 
-    var s = toEventTarget(pda.createNetworkActivityStream(this._archive));
+    var s = toEventTarget(pda.createNetworkActivityStream(this._archive))
 
-    s.addEventListener("network-changed", detail =>
-      this.send("network-changed", { target: this, ...detail })
-    );
+    s.addEventListener('network-changed', detail =>
+      this.send('network-changed', { target: this, ...detail })
+    )
 
-    s.addEventListener("download", detail =>
-      this.send("download", { target: this, ...detail })
-    );
+    s.addEventListener('download', detail =>
+      this.send('download', { target: this, ...detail })
+    )
 
-    s.addEventListener("upload", detail =>
-      this.send("upload", { target: this, ...detail })
-    );
+    s.addEventListener('upload', detail =>
+      this.send('upload', { target: this, ...detail })
+    )
 
-    s.addEventListener("sync", detail =>
-      this.send("sync", { target: this, ...detail })
-    );
+    s.addEventListener('sync', detail =>
+      this.send('sync', { target: this, ...detail })
+    )
   }
 
   async getInfo (opts = {}) {
@@ -228,15 +228,29 @@ class DatArchive extends EventTarget {
     })
   }
 
-  watch(pathPattern, onInvalidated) {
-    if (typeof pathPattern === "function") {
-      onInvalidated = pathPattern;
-      pathPattern = null;
+  watch (pathPattern, onInvalidated) {
+    if (typeof pathPattern === 'function') {
+      onInvalidated = pathPattern
+      pathPattern = null
     }
 
-    var evts = toEventTarget(pda.watch(this._archive, pathPattern));
-    if (onInvalidated) evts.addEventListener("invalidated", onInvalidated);
-    return evts;
+    if(this._loadPromise) {
+      var proxy = new EventTarget()
+      this._loadPromise.then(() => {
+        var evts = this.watch(pathPattern, onInvalidated)
+        evts.addEventListener('invalidated', (e) => {
+          proxy.send('invalidated', e)
+        })
+        evts.addEventListener('changed', (e) => {
+          proxy.send('changed', e)
+        })
+      })
+      return proxy
+    }
+
+    var evts = toEventTarget(pda.watch(this._archive, pathPattern))
+    if (onInvalidated) evts.addEventListener('invalidated', onInvalidated)
+    return evts
   }
 
   async writeFile (filepath, data, opts = {}) {
@@ -388,7 +402,7 @@ class DatArchive extends EventTarget {
     return archive
   }
 
-  static async load(url) {
+  static async load (url) {
     const archive = new DatArchive(url)
 
     await archive._loadPromise
@@ -443,7 +457,7 @@ function massageFilepath (filepath) {
 function waitReady (archive) {
   return new Promise((resolve, reject) => {
     archive.ready((err) => {
-      if(err) reject(err)
+      if (err) reject(err)
       else resolve(archive)
     })
   })
