@@ -94,6 +94,7 @@ class DatArchive extends EventTarget {
     this._loadPromise = waitReady(archive).then(async () => {
       this._checkout = version ? archive.checkout(version) : archive
       this.url = this.url || `dat://${archive.key.toString('hex')}`
+      this._loadPromise = null
 
       // if (!archive.writable && !archive.metadata.length) {
       //   // wait to receive a first update
