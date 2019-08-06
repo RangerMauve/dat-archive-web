@@ -1,3 +1,5 @@
+/* global localStorage, prompt */
+
 // Ripped out of node-dat-archive
 
 const path = require('path')
@@ -235,7 +237,7 @@ class DatArchive extends EventTarget {
       pathPattern = null
     }
 
-    if(this._loadPromise) {
+    if (this._loadPromise) {
       var proxy = new EventTarget()
       this._loadPromise.then(() => {
         var evts = this.watch(pathPattern, onInvalidated)
