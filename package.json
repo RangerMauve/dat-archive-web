@@ -1,6 +1,6 @@
 {
   "name": "dat-archive-web",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "DatArchive implementation for borwsers that uses dat-gateway",
   "main": "index.js",
   "scripts": {
