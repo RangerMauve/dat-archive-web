@@ -1,3 +1,5 @@
+**Note: This is being replaced by the [Dat SDK](https://github.com/datproject/sdk)**
+
 # dat-archive-web
 DatArchive implementation for browsers using [dat-js](https://github.com/datproject/dat-js#readme)
 
